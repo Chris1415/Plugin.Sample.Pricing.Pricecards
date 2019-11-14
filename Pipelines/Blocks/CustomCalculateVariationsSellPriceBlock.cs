@@ -26,9 +26,15 @@ namespace Plugin.Sample.Pricing.Pricecards
             PriceSnapshotComponent snapshotComponent1 = priceCard.Snapshots.Where(s =>
             {
                 var snapshotEndDateComponent = s.GetComponent<SnapshotEndDateComponent>();
-                return s.IsApproved(context.CommerceContext)
-                ? s.BeginDate.CompareTo(effectiveDate) <= 0 && snapshotEndDateComponent.EndDate.CompareTo(effectiveDate) >= 0
-                : false;
+                if (s.IsApproved(context.CommerceContext))
+                {
+                    bool startDateReached = s.BeginDate.CompareTo(effectiveDate) <= 0;
+                    bool endDateNotReached = snapshotEndDateComponent.EndDate != DateTimeOffset.MinValue
+                        ? startDateReached && snapshotEndDateComponent.EndDate.CompareTo(effectiveDate) >= 0
+                        : true;
+                    return startDateReached && endDateNotReached;
+                }
+                return false;
             }).OrderByDescending(s => s.BeginDate).FirstOrDefault();
             if (snapshotComponent1 == null)
             {
